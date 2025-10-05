@@ -1,26 +1,44 @@
-// import { BrowserRouter, Routes, Route } from "react-router-dom";
-// import TicketsList from "./pages/TicketsList";
-// import TicketNew from "./pages/TicketNew";
-// import TicketDetails from "./pages/TicketDetails";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Welcome from "./pages/Welcome";
+import TicketsList from "./pages/TicketsList";
+import TicketNew from "./pages/TicketNew";
+import TicketDetails from "./pages/TicketDetails";
+import PrivateRoute from "./components/PrivateRoute";
 
-// export default function App() {
-//   return (
-//     <BrowserRouter>
-//       <Routes>
-//         <Route path="/tickets" element={<TicketsList />} />
-//         <Route path="/tickets/new" element={<TicketNew />} />
-//         <Route path="/tickets/:id" element={<TicketDetails />} />
-//       </Routes>
-//     </BrowserRouter>
-//   );
-// }
-function App() {
+export default function App() {
+  const setToken = (token) => {
+    localStorage.setItem("token", token);
+  };
+
   return (
-    <div className="text-center">
-      <h1 className="text-3xl font-bold">Hello, React + Tailwind!</h1>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Welcome setToken={setToken} />} />
+        <Route
+          path="/tickets"
+          element={
+            <PrivateRoute>
+              <TicketsList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/tickets/new"
+          element={
+            <PrivateRoute>
+              <TicketNew />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/tickets/:id"
+          element={
+            <PrivateRoute>
+              <TicketDetails />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App
-

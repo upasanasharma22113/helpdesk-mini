@@ -1,21 +1,52 @@
 import { useEffect, useState } from "react";
-import API from "../api";
+import { useNavigate } from "react-router-dom";
+import API from "../utils/api.js";
 
 export default function TicketsList() {
   const [tickets, setTickets] = useState([]);
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+
   useEffect(() => {
-    API.get("/tickets?limit=5&offset=0").then(res => {
-      setTickets(res.data.items || []);
-    });
-  }, []);
+    async function fetchTickets() {
+      try {
+        const data = await API.apiRequest("/tickets?limit=10&offset=0", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (data.items) {
+          setTickets(data.items);
+        } else {
+          setTickets([]);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchTickets();
+  }, [token]);
+
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Tickets List</h1>
+    <div style={{ padding: "2rem" }}>
+      <h1>Tickets List</h1>
       <ul>
-        {tickets.map(t => (
-          <li key={t.id} className="mb-2 p-2 border rounded">
-            <a href={`/tickets/${t.id}`}>{t.title}</a>
-            <div className="text-sm text-gray-500">{t.description}</div>
+        {tickets.map((ticket) => (
+          <li
+            key={ticket.id}
+            onClick={() => navigate(`/tickets/${ticket.id}`)}
+            style={{
+              cursor: "pointer",
+              marginBottom: "1rem",
+              padding: "1rem",
+              border: "1px solid #ccc",
+              backgroundColor: ticket.breached ? "#f8d7da" : "#e2f0d9",
+            }}
+          >
+            <strong>{ticket.title}</strong> <br />
+            Status: {ticket.status} | Priority: {ticket.priority}{" "}
+            {ticket.breached && <span style={{ color: "red" }}>⚠ SLA breached</span>}
           </li>
         ))}
       </ul>

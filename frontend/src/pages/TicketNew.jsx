@@ -1,46 +1,81 @@
 import { useState } from "react";
-import API from "../api";
+import { useNavigate } from "react-router-dom";
+import API from "../utils/api.js";
 
 export default function TicketNew() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [message, setMessage] = useState("");
-  const handleSubmit = async e => {
+  const [priority, setPriority] = useState("normal");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const token = localStorage.getItem("token"); // JWT token
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
+    if (!title || !description) {
+      setError("Title and description are required");
+      return;
+    }
+
     try {
-      const res = await API.post(
-        "/tickets",
-        { title, description, user_id: 1 }, // Default to Admin for demo
-        { headers: { "Idempotency-Key": Date.now().toString() } }
-      );
-      setMessage("Ticket created: " + res.data.id);
-      setTitle("");
-      setDescription("");
+      const data = await API.apiRequest("/tickets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, description, priority }),
+      });
+
+      if (data.error) {
+        setError(data.error.message);
+        return;
+      }
+
+      alert("Ticket created successfully!");
+      navigate("/tickets"); // Redirect to tickets list
     } catch (err) {
-      setMessage(err.response?.data?.error?.message || "Error");
+      console.error(err);
+      setError(err.message || "Failed to create ticket");
     }
   };
+
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">New Ticket</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          className="border p-2 w-full"
-          placeholder="Title"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-        />
-        <textarea
-          className="border p-2 w-full"
-          placeholder="Description"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-        />
-        <button className="bg-blue-500 text-white px-4 py-2 rounded" type="submit">
-          Create Ticket
-        </button>
+    <div style={{ padding: "2rem" }}>
+      <h1>Create New Ticket</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Title:</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label>Description:</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label>Priority:</label>
+          <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <button type="submit">Create Ticket</button>
       </form>
-      {message && <div className="mt-4 text-green-600">{message}</div>}
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );
 }
